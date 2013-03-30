@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Runtime.Serialization;
 
 namespace NLP.Models
 {
-    public class Unigram : IEnumerable
+    #region Unigram
+    [Serializable]
+    public class Unigram : Model, IEnumerable
     {
         Dictionary<string, int> freqList;
         int count;
@@ -31,16 +34,21 @@ namespace NLP.Models
             count++;
         }
 
-        public float Qml(string word)
+        public double Qml(string word)
         {
             try
             {
-                return (float)freqList[word] / (float)freqList.Keys.Count;
+                return (double)freqList[word] / (double)freqList.Keys.Count;
             }
             catch (Exception)
             {
                 return 0;
             }
+        }
+
+        public bool Contains(string word)
+        {
+            return freqList.Keys.Contains(word);
         }
 
         public int this[string word]
@@ -72,8 +80,13 @@ namespace NLP.Models
         }
 
         #endregion
+
     }
-    public class Bigram : IEnumerable
+    #endregion
+
+    #region Bigram
+    [Serializable]
+    public class Bigram : Model, IEnumerable
     {
         Dictionary<string, Unigram> freqList;
         Unigram unigram;
@@ -103,11 +116,11 @@ namespace NLP.Models
 
         }
 
-        public float Qml(string word, string w1)
+        public double Qml(string word, string w1)
         {
             try
             {
-                return (float)freqList[word][w1] / (float)unigram[w1];
+                return (double)freqList[word][w1] / (double)unigram[w1];
             }
             catch (Exception)
             {
@@ -147,8 +160,13 @@ namespace NLP.Models
         }
 
         #endregion
+
     }
-    public class Trigram : IEnumerable
+    #endregion
+
+    #region Trigram
+    [Serializable]
+    public class Trigram : Model, IEnumerable
     {
         Dictionary<string, Bigram> freqList;
         Bigram bigram;
@@ -177,11 +195,11 @@ namespace NLP.Models
             count++;
         }
 
-        public float Qml(string word, string w1, string w2)
+        public double Qml(string word, string w1, string w2)
         {
             try
             {
-                return (float)freqList[word][w1, w2] / (float)bigram[w1, w2];
+                return (double)freqList[word][w1, w2] / (double)bigram[w1, w2];
             }
             catch (Exception)
             {
@@ -221,6 +239,14 @@ namespace NLP.Models
         }
 
         #endregion
-    }
 
+      
+    }
+    #endregion
+
+    [Serializable]
+    public class Model
+    {
+ 
+    }
 }

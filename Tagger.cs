@@ -16,6 +16,18 @@ namespace NLP
             Unigram freqList,
             HashSet<string> tags)
         {
+            return Viterbi(str,q,e,freqList,tags,false);
+        }
+
+        
+        public static List<string> Viterbi(
+           List<string> str,
+           Trigram q,
+           Bigram e,
+           Unigram freqList,
+           HashSet<string> tags,
+           bool splitRare)
+        {
             List<string> y = new List<string>();
             Dictionary<string, double> current = new Dictionary<string, double>();
             Dictionary<string, double> previous = new Dictionary<string, double>();
@@ -26,6 +38,7 @@ namespace NLP
             if (freqList.Contains(str[0]))
             {
                 y.Add("STOP");
+
                 foreach (string v in tags)
                 {
                     prob = q.Qml(v, "*", "*") * e.Qml(str[0], v);
@@ -41,9 +54,10 @@ namespace NLP
             }
             else
             {
-                y.Add("_RARE_");
+                string v = (splitRare) ? ProperRare(str[0]) : "_RARE_";
+                y.Add(v);
 
-                prob = Math.Max(q.Qml("_RARE_", "*", "*"),0);
+                prob = Math.Max(q.Qml("_RARE_", "*", "*"), 0);
                 current.Add("*:" + "_RARE_", prob);
 
             }
@@ -54,7 +68,7 @@ namespace NLP
             if (freqList.Contains(str[1]))
             {
                 y.Add("STOP");
-                
+
                 foreach (string u in tags)
                 {
                     foreach (string v in tags)
@@ -81,7 +95,7 @@ namespace NLP
             }
             else
             {
-                string v = "_RARE_";
+                string v = (splitRare) ? ProperRare(str[1]) : "_RARE_";
                 y.Add(v);
 
                 foreach (string u in tags)
@@ -116,7 +130,7 @@ namespace NLP
                 if (freqList.Contains(str[i]))
                 {
                     y.Add("STOP");
-                    
+
                     foreach (string v in tags)
                     {
                         foreach (string u in tags)
@@ -134,7 +148,7 @@ namespace NLP
 
                                     prob = 0;
                                 }
-                                
+
 
                                 try
                                 {
@@ -142,7 +156,7 @@ namespace NLP
                                         current.Add(string.Format("{0}:{1}", u, v), prob);
 
                                 }
-                                catch (Exception ex)
+                                catch (Exception)
                                 {
                                     if (prob > current[string.Format("{0}:{1}", u, v)])
                                     {
@@ -164,9 +178,9 @@ namespace NLP
                 }
                 else
                 {
-                    string v = "_RARE_";
+                    string v = (splitRare) ? ProperRare(str[i]) : "_RARE_";
                     y.Add(v);
-                    
+
                     foreach (string u in tags)
                     {
                         foreach (string w in tags)
@@ -181,7 +195,7 @@ namespace NLP
                             {
                                 prob = 0;
                             }
-                            
+
 
                             try
                             {
@@ -189,7 +203,7 @@ namespace NLP
                                     current.Add(string.Format("{0}:{1}", u, v), prob);
 
                             }
-                            catch (Exception ex)
+                            catch (Exception)
                             {
                                 if (prob > current[string.Format("{0}:{1}", u, v)])
                                 {
@@ -213,6 +227,23 @@ namespace NLP
 
             return y;
         }
+
+
+        static string ProperRare(string word)
+        {
+            for (int i = 0; i < word.Length; i++)
+                if (Char.IsDigit(word[i]))
+                    return "NUMERIC";
+
+            if (word == word.ToUpper())
+                return "ALL_CAPITALS";
+
+            if (word[word.Length - 1] == Char.ToUpper(word[word.Length - 1]))
+                return "LAST_CAPITAL";
+
+            return "_RARE_";
+        }
+
 
         public static List<string> EMTagger(List<string> sentence, HashSet<string> tags, Bigram emissionProb)
         {
